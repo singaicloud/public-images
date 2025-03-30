@@ -3,7 +3,6 @@
 
 本文档旨在指导用户如何在 Kubernetes 环境中，利用 StatefulSet 与 Headless Service 构建的分布式部署，实现 PyTorch DDP 训练任务。系统会在每个 Pod 启动时自动注入一系列基础环境变量，用户可通过解析这些变量，灵活配置分布式训练参数，从而实现跨 Pod 通信与任务启动。
 
----
 
 ## 1. 环境概述
 
@@ -20,7 +19,6 @@
   ```  
   例如，`statefulset_name-0.service_name.namespace.svc.cluster.local` 表示第一个 Pod 的 DNS 域名。
 
----
 
 ## 2. 注入的环境变量
 
@@ -34,7 +32,6 @@
 
 这些变量为组装分布式训练任务所需的参数提供了基础信息。
 
----
 
 ## 3. 环境变量处理与启动脚本示例
 
@@ -84,7 +81,6 @@ user_command
 
 用户可以根据自身需求，自定义或扩展该脚本以适应特定场景。
 
----
 
 ## 4. 使用步骤
 
@@ -106,4 +102,119 @@ user_command
    nslookup ${JOBNAME}-0.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local
    ```
    应返回主节点的正确 IP 地址列表。
+
+---
+
+# Distributed PyTorch DDP Training Task User Guide
+
+This document provides comprehensive instructions for configuring and running distributed PyTorch DDP training tasks in a Kubernetes environment leveraging StatefulSet and Headless Service. In this setup, each pod is assigned a fixed DNS name and is automatically injected with a set of fundamental environment variables, which can be further processed via shell scripts to extract the parameters required for distributed training.
+
+
+## 1. Environment Overview
+
+In our architecture, each **pod** serves as the basic unit. Every pod hosts a user-defined container that runs one DDP process. To facilitate communication across pods during distributed training, we employ Kubernetes **StatefulSet** and **Headless Service**:
+
+- **StatefulSet:**  
+  Each pod obtains a stable DNS name. For instance, the *n*th pod is named `statefulset_name-n`.
+
+- **Headless Service:**  
+  By configuring the Service with a `clusterIP` set to `None`, all pods that match the specified label are registered directly with DNS. Consequently, when any pod queries the Service domain, it receives a list of IP addresses corresponding to all matching pods.  
+  Specifically, a pod with the name `statefulset_name-n` resolves to the DNS address:  
+  ```
+  statefulset_name-n.service_name.namespace.svc.cluster.local
+  ```
+
+
+## 2. Injected Environment Variables
+
+At container startup, the following basic environment variables are automatically injected to provide essential runtime information:
+
+- **POD_NAME:**  
+  The name of the current pod (e.g., `statefulset_name-n`).
+
+- **SVC_NAME:**  
+  The corresponding Service name, which is used for DNS resolution.
+
+- **POD_NUMS:**  
+  The total number of pods in the cluster, representing the overall scale of the task.
+
+- **POD_PORT:**  
+  The port number used for communication in the distributed task.
+
+- **POD_NAMESPACE:**  
+  The Kubernetes namespace in which the pod is deployed (used for constructing the full DNS names).
+
+These variables serve as the foundation for constructing distributed task parameters.
+
+
+## 3. Environment Variable Processing and Startup Script Example
+
+To help users dynamically configure distributed training parameters, we recommend including a shell script in the container's startup command that processes the injected environment variables. For example:
+
+```bash
+#!/bin/sh
+
+# Extract the pod's numeric identifier from POD_NAME (e.g., from "statefulset_name-n" obtain "n")
+export MYRANK="${POD_NAME##*-}"
+
+# Derive the base job name by removing the numeric suffix from POD_NAME
+export JOBNAME="${POD_NAME%-*}"
+
+# Ensure Python output is unbuffered for real-time logging (useful for PyTorch training)
+export PYTHONUNBUFFERED='1'
+
+# Inherit communication port from the injected POD_PORT
+export MASTER_PORT=$POD_PORT
+export PET_MASTER_PORT=$POD_PORT
+
+# Construct the master address assuming that the pod with rank 0 is the master
+export MASTER_ADDR="${JOBNAME}-0.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local"
+export PET_MASTER_ADDR="${JOBNAME}-0.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local"
+
+# Set distributed training parameters: total process count and current process rank
+export WORLD_SIZE=$POD_NUMS
+export RANK=$MYRANK
+export PET_NODE_RANK=$MYRANK
+
+# Optionally, automatically determine the number of processes per node (modify if needed)
+export PET_NPROC_PER_NODE='auto'
+export PET_NNODES=$WORLD_SIZE
+
+# Output the configuration for debugging and verification purposes
+echo "Port is $PET_MASTER_PORT, master addr is $MASTER_ADDR, world size is $WORLD_SIZE, rank is $RANK"
+
+# Execute the user-defined command to start the training task
+user_command
+```
+
+**Script Explanation:**  
+- **MYRANK:** Extracts the numerical suffix from `POD_NAME` to determine the pod's rank.  
+- **JOBNAME:** Strips the trailing numeric component from `POD_NAME` to obtain the base job name.  
+- **MASTER_ADDR / MASTER_PORT:** Constructs the DNS address and port of the master node (assumed to be the pod with rank 0), which is essential for coordinating distributed training.  
+- Other variables such as `WORLD_SIZE` and `RANK` define the overall size of the distributed job and the current node's identifier, respectively.
+
+Users may customize the script further based on their specific training requirements.
+
+
+## 4. Usage Steps
+
+1. **Build Your Container Image:**  
+   Ensure that your container image includes all required dependencies and the startup script as described. Typically, you can specify the startup script using the `ENTRYPOINT` or `CMD` directive in your Dockerfile.
+
+2. **YAML Configuration:**  
+   Include the above environment variable settings in your Kubernetes deployment configuration (e.g., within your StatefulSet manifest). You can refer to the provided example YAML for guidance.
+
+3. **Debugging:**  
+   After deployment, review the pod logs to verify that environment variables (such as `MASTER_ADDR`, `RANK`, `WORLD_SIZE`, etc.) are correctly set and processed.
+
+4. **Start the Distributed Job:**  
+   Launch your distributed training task (e.g., PyTorch DDP) using the processed environment variables to establish proper cross-pod communication.
+
+5. **DNS Resolution Verification:**  
+   Within any pod, use tools like `nslookup` or `dig` to confirm that the DNS name resolves correctly. For example:
+   ```bash
+   nslookup ${JOBNAME}-0.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local
+   ```
+   This should return the correct IP address of the master pod.
+
 
