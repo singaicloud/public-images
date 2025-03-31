@@ -1,4 +1,4 @@
-
+<!-- 
 # 分布式 PyTorch DDP 训练任务使用说明
 
 本文档旨在指导用户如何在 Kubernetes 环境中，利用 StatefulSet 与 Headless Service 构建的分布式部署，实现 PyTorch DDP 训练任务。系统会在每个 Pod 启动时自动注入一系列基础环境变量，用户可通过解析这些变量，灵活配置分布式训练参数，从而实现跨 Pod 通信与任务启动。
@@ -215,6 +215,51 @@ Users may customize the script further based on their specific training requirem
    ```bash
    nslookup ${JOBNAME}-0.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local
    ```
-   This should return the correct IP address of the master pod.
+   This should return the correct IP address of the master pod. -->
 
 
+# Distributed PyTorch Training User Guide
+
+When the program starts, it automatically sets several environment variables that configure the distributed training parameters. Simply use these variables in your start-up script to launch the distributed task.
+
+### Key Environment Variables
+
+- **`POD_NAME`**  
+  The name of the current instance, e.g., `myjob-0`.
+
+- **`POD_NUMS`**  
+  The total number of instances (or training processes).
+
+- **`POD_PORT`**  
+  The communication port used for data exchange between the training processes.
+
+- **`POD_NAMESPACE`**  
+  The namespace of the current environment, used in constructing the master node address.
+
+### Example Start-Up Script
+
+```bash
+#!/bin/sh
+
+# Extract the current instance number (from the trailing number in POD_NAME)
+export MYRANK="${POD_NAME##*-}"
+
+# Extract the base job name (remove the numeric suffix from POD_NAME)
+export JOBNAME="${POD_NAME%-*}"
+
+# By default, the instance with number 0 is set as the master node.
+# Construct the master node address.
+export MASTER_ADDR="${JOBNAME}-0.domain.example.com"
+export MASTER_PORT=$POD_PORT
+
+# Set the process rank and the total number of training processes.
+export RANK=$MYRANK
+export WORLD_SIZE=$POD_NUMS
+
+# Start the distributed training task.
+python train_ddp.py \
+    --master-addr "$MASTER_ADDR" \
+    --master-port "$MASTER_PORT" \
+    --rank "$RANK" \
+    --world-size "$WORLD_SIZE"
+```
