@@ -224,17 +224,20 @@ When the program starts, it automatically sets several environment variables tha
 
 ### Key Environment Variables
 
-- **`POD_NAME`**  
-  The name of the current instance, e.g., `myjob-0`.
+- **POD_NAME:**  
+  The name of the current pod (e.g., `statefulset_name-n`).
 
-- **`POD_NUMS`**  
-  The total number of instances (or training processes).
+- **SVC_NAME:**  
+  The corresponding Service name, which is used for DNS resolution.
 
-- **`POD_PORT`**  
-  The communication port used for data exchange between the training processes.
+- **POD_NUMS:**  
+  The total number of pods in the cluster, representing the overall scale of the task.
 
-- **`POD_NAMESPACE`**  
-  The namespace of the current environment, used in constructing the master node address.
+- **POD_PORT:**  
+  The port number used for communication in the distributed task.
+
+- **POD_NAMESPACE:**  
+  The Kubernetes namespace in which the pod is deployed (used for constructing the full DNS names).
 
 ### Example Start-Up Script
 
@@ -249,12 +252,15 @@ export JOBNAME="${POD_NAME%-*}"
 
 # By default, the instance with number 0 is set as the master node.
 # Construct the master node address.
-export MASTER_ADDR="${JOBNAME}-0.domain.example.com"
+export MASTER_ADDR=""${JOBNAME}-0.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local""
 export MASTER_PORT=$POD_PORT
 
 # Set the process rank and the total number of training processes.
 export RANK=$MYRANK
 export WORLD_SIZE=$POD_NUMS
+
+# Output the configuration for debugging and verification purposes
+echo "Port is $PET_MASTER_PORT, master addr is $MASTER_ADDR, world size is $WORLD_SIZE, rank is $RANK"
 
 # Start the distributed training task.
 python train_ddp.py \
