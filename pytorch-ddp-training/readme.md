@@ -244,10 +244,10 @@ When the program starts, it automatically sets several environment variables tha
 ```bash
 #!/bin/sh
 
-# Extract the current instance number (from the trailing number in POD_NAME)
+# Extract the current instance number (from the trailing number in POD_NAME, e.g., `n` from `statefulset_name-n`)
 export MYRANK="${POD_NAME##*-}"
 
-# Extract the base job name (remove the numeric suffix from POD_NAME)
+# Extract the base job name (remove the numeric suffix from POD_NAME, e.g., `statefulset_name` from `statefulset_name-n`)
 export JOBNAME="${POD_NAME%-*}"
 
 # By default, the instance with number 0 is set as the master node.
