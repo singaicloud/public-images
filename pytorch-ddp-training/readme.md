@@ -227,13 +227,13 @@ When the program starts, it automatically sets several environment variables tha
 - **`POD_NAME`**  
   The name of the current instance, e.g., `myjob-0-E5F86S4`.
 
-- **`JOB_NAME`**
+- **`JOB_NAME`**  
   The name of current job, e.g., `my-job`
 
 - **`POD_NUMS`**  
   The total number of instances (or training processes).
 
-- **`JOB_COMPLETION_INDEX`**
+- **`JOB_COMPLETION_INDEX`**  
   The rank of the current pod, e.g., `0` when the `POD_NAME` is `myjob-0-E5F86S4`.
 
 - **`POD_PORT`**  
