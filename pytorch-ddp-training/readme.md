@@ -224,43 +224,39 @@ When the program starts, it automatically sets several environment variables tha
 
 ### Key Environment Variables
 
-- **POD_NAME:**  
-  The name of the current pod (e.g., `statefulset_name-n`).
+- **`POD_NAME`**  
+  The name of the current instance, e.g., `myjob-0-E5F86S4`.
 
-- **SVC_NAME:**  
-  The corresponding Service name, which is used for DNS resolution.
+- **`JOB_NAME`**
+  The name of current job, e.g., `my-job`
 
-- **POD_NUMS:**  
-  The total number of pods in the cluster, representing the overall scale of the task.
+- **`POD_NUMS`**  
+  The total number of instances (or training processes).
 
-- **POD_PORT:**  
-  The port number used for communication in the distributed task.
+- **`JOB_COMPLETION_INDEX`**
+  The rank of the current pod, e.g., `0` when the `POD_NAME` is `myjob-0-E5F86S4`.
 
-- **POD_NAMESPACE:**  
-  The Kubernetes namespace in which the pod is deployed (used for constructing the full DNS names).
+- **`POD_PORT`**  
+  The communication port used for data exchange between the training processes.
+
+- **`POD_NAMESPACE`**  
+  The namespace of the current environment, used in constructing the master node address.
+
+
 
 ### Example Start-Up Script
 
 ```bash
 #!/bin/sh
 
-# Extract the current instance number (from the trailing number in POD_NAME, e.g., `n` from `statefulset_name-n`)
-export MYRANK="${POD_NAME##*-}"
-
-# Extract the base job name (remove the numeric suffix from POD_NAME, e.g., `statefulset_name` from `statefulset_name-n`)
-export JOBNAME="${POD_NAME%-*}"
-
 # By default, the instance with number 0 is set as the master node.
 # Construct the master node address.
-export MASTER_ADDR=""${JOBNAME}-0.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local""
+export MASTER_ADDR="${JOB_NAME}-0.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local"
 export MASTER_PORT=$POD_PORT
 
 # Set the process rank and the total number of training processes.
-export RANK=$MYRANK
+export RANK=$JOB_COMPLETION_INDEX
 export WORLD_SIZE=$POD_NUMS
-
-# Output the configuration for debugging and verification purposes
-echo "Port is $PET_MASTER_PORT, master addr is $MASTER_ADDR, world size is $WORLD_SIZE, rank is $RANK"
 
 # Start the distributed training task.
 python train_ddp.py \
