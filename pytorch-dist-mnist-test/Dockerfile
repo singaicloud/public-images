@@ -18,8 +18,13 @@ RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/
 
 RUN mkdir /var/run/sshd
 
+RUN mkdir -p /opt/mnist
+WORKDIR /opt/mnist/src
+ADD mnist.py /opt/mnist/src/mnist.py
+
+RUN chgrp -R 0 /opt/mnist \
+    && chmod -R g+rwX /opt/mnist
+
 EXPOSE 22
 
-# ENTRYPOINT ["python", "/opt/mnist/src/mnist.py"]
-# CMD /usr/sbin/sshd && tail -f /dev/null
 CMD ["/usr/sbin/sshd", "-D"]

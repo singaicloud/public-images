@@ -220,9 +220,33 @@ Users may customize the script further based on their specific training requirem
 
 # Distributed PyTorch Training User Guide
 
-When the program starts, it automatically sets several environment variables that configure the distributed training parameters. Simply use these variables in your start-up script to launch the distributed task.
+```
+pytorch-dist-mnist-test
+├── Dockerfile  # the example dockerfile to build the distributed training image
+└── mnist.py    # the example python code for distributed training
+```
 
-### Key Environment Variables
+## Running Job
+
+Please use the default entrypoint to start the image:
+```
+python /opt/mnist/src/mnist.py --backend nccl --run-training
+```
+After the job is submitted, it should be completed within 3 minutes. 
+
+## Build Your Own Distributed Training Image
+When the job starts, it automatically sets several environment variables that configure the distributed training parameters. You can refer to `mnist.py` and use them directly in your own python code.
+
+
+`os.environ["RANK"]` This variable represents the rank (or ID) of the current process within the distributed group. Each process in the distributed training setup will have a unique rank, which is used to identify it within the communication group.
+
+`os.environ["WORLD_SIZE"]` This variable indicates the total number of processes (or nodes) involved in the distributed training. It helps each process understand how many participants are involved in the training process.
+
+`os.environ["MASTER_ADDR"]` This is the IP address (or hostname) of the master node. The master node is responsible for coordinating the distributed training and is typically the node where the "rank 0" process resides. Other processes will use this address to communicate.
+
+
+
+<!-- ### Key Environment Variables
 
 - **`POD_NAME`**  
   The name of the current instance, e.g., `myjob-0-E5F86S4`.
@@ -264,4 +288,4 @@ python train_ddp.py \
     --master-port "$MASTER_PORT" \
     --rank "$RANK" \
     --world-size "$WORLD_SIZE"
-```
+``` -->
