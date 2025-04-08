@@ -234,16 +234,63 @@ python /opt/mnist/src/mnist.py --backend nccl --run-training
 ```
 After the job is submitted, it should be completed within 3 minutes. 
 
-## Build Your Own Distributed Training Image
-When the job starts, it automatically sets several environment variables that configure the distributed training parameters. You can refer to `mnist.py` and use them directly in your own python code.
+## How it works
 
+When a distributed training job starts, several environment variables are automatically set to configure the parameters for the distributed setup.
 
-`os.environ["RANK"]` This variable represents the rank (or ID) of the current process within the distributed group. Each process in the distributed training setup will have a unique rank, which is used to identify it within the communication group.
+### Constructing the Communication Address:
 
-`os.environ["WORLD_SIZE"]` This variable indicates the total number of processes (or nodes) involved in the distributed training. It helps each process understand how many participants are involved in the training process.
+The communication address for each pod (or process) is generally constructed as follows:
 
-`os.environ["MASTER_ADDR"]` This is the IP address (or hostname) of the master node. The master node is responsible for coordinating the distributed training and is typically the node where the "rank 0" process resides. Other processes will use this address to communicate.
+```
+POD_ADDRESS="${JOB_NAME}-${RANK}.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local"
+```
 
+This address is used for identifying the communication endpoints between different processes. **`You can use the following Environment Variables directly in your python code.`**
+
+#### Environment Variables used in constructing the address:
+
+- **`RANK`**  The rank (or ID) of the current process within the distributed group.
+
+- **`POD_NAMESPACE`**  The username of User.
+
+- **`SVC_NAME`**  The service name for the job.
+
+- **`JOB_NAME`**  The name of the current job.
+
+#### Other Environment Variables:
+
+- **`WORLD_SIZE`**  The total number of processes (or nodes) involved in the distributed training.
+
+- **`MASTER_ADDR`**  The IP address (or hostname) of the master node.
+
+#### Example:
+
+Assume that we submit a job named `test`, use `2 nodes`, and the username is `demo-project`, then the environment variables mentioned below are:
+
+```
+For node 0: 
+RANK = 0
+WORLD_SIZE = 2
+JOB_NAME = test
+SVC_NAME = test-service
+MASTER_ADDR = test-0.test-service.demo-project.svc.cluster.local
+POD_ADDR = test-0.test-service.demo-project.svc.cluster.local
+
+For node 1: 
+RANK = 1
+WORLD_SIZE = 2
+JOB_NAME = test
+SVC_NAME = test-service
+MASTER_ADDR = test-0.test-service.demo-project.svc.cluster.local
+POD_ADDR = test-1.test-service.demo-project.svc.cluster.local
+```
+
+### Communication Mechanism:
+
+While the **`MASTER_ADDR`** points to the "master" node for some communication frameworks. In peer-to-peer configurations or other communication strategies, each process might have the information of all other processes, and communication can occur between all processes without relying on a single master node.
+
+To find the addresses of other processes, each node can use the **`POD_ADDRESS`** format to identify other participants based on their rank and job name. The rank is used as a unique identifier for each process, and each rank knows how to address other processes through their respective addresses, which are constructed based on the environment variables.
 
 
 <!-- ### Key Environment Variables
