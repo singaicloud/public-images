@@ -14,61 +14,62 @@ python /opt/mnist/src/mnist.py --backend nccl --run-training
 ```
 After the job is submitted, it should be completed within 3 minutes. 
 
-## How it works
+---
 
-When a distributed training job starts, several environment variables are automatically set to configure the parameters for the distributed setup.
+## How to Set Up Cross-Node Communication in a Distributed Setting
 
-### Constructing the Communication Address:
 
-The following `POD_ADDR` is the communication address for each Pod (or process):
+When running distributed training jobs, several environment variables are automatically set to simplify communication across multiple nodes (processes). This guide explains these variables and how to utilize them effectively.
 
-```
-POD_ADDR="${JOB_NAME}-${RANK}.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local"
-```
-This address is used for identifying the communication endpoints between different Pods (or processes).
+### Constructing Host Addresses for Communication
 
-#### Environment Variables used in constructing the address:
+Nodes communicate using a unique host address format constructed from environment variables:
 
-`You can use the following Environment Variables directly in your python code.`
-
-- **`RANK`**  The rank (or ID) of the current Pod (or process) within the distributed group.
-
-- **`POD_NAMESPACE`**  The username of User.
-
-- **`SVC_NAME`**  The service name for the job.
-
-- **`JOB_NAME`**  The name of the current job.
-
-##### Other Environment Variables:
-
-- **`WORLD_SIZE`**  The total number of Pods (or processes) involved in the distributed training.
-
-- **`MASTER_ADDR`**  The address of the master pod (rank 0 pod).
-
-#### Example:
-
-Assume that we submit a job named `test`, use `2 pods`, and the username is `demo-project`, then the environment variables mentioned below are:
-
-```
-For pod 0: 
-RANK = 0
-WORLD_SIZE = 2
-JOB_NAME = test
-SVC_NAME = test-service
-MASTER_ADDR = test-0.test-service.demo-project.svc.cluster.local
-POD_ADDR = test-0.test-service.demo-project.svc.cluster.local
-
-For pod 1: 
-RANK = 1
-WORLD_SIZE = 2
-JOB_NAME = test
-SVC_NAME = test-service
-MASTER_ADDR = test-0.test-service.demo-project.svc.cluster.local
-POD_ADDR = test-1.test-service.demo-project.svc.cluster.local
+```markdown
+HOST_ADDR="${JOB_NAME}-${RANK}.${HOSTNAME_SUFFIX}"
 ```
 
-### Communication Mechanism:
+This host address uniquely identifies each node within your cluster.
 
-The **`MASTER_ADDR`** points to the "master" pod (rank 0 pod) for some communication frameworks. In peer-to-peer configurations or other communication strategies, each process might have the information of all other processes, and communication can occur between all processes without relying on a single master pod.
 
-To find the addresses of other processes, each pod can use the **`POD_ADDR`** format to identify other participants based on their rank and job name. The rank is used as a unique identifier for each process, and each rank knows how to address other processes through their respective addresses, which are constructed based on the environment variables.
+### Environment Variables
+
+These environment variables can be directly used in Python scripts or shell commands:
+
+| Variable Name     | Description                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------- |
+| `RANK`            | Unique identifier for each node within the distributed group.                         |
+| `WORLD_SIZE`      | Total number of nodes participating in the distributed job.                           |
+| `JOB_NAME`        | Name of your distributed job.                                                         |
+| `HOSTNAME_SUFFIX` | Automatically generated host domain suffix provided by the scheduler.                 |
+| `MASTER_ADDR`     | Shortcut host address for the node with rank 0 (often designated as the master node). |
+
+> **Tip:** The only variable that differs among nodes is `RANK`. All other variables remain consistent across nodes.
+
+
+### Example Configuration
+
+Consider a distributed job named `test` with two nodes and a `HOSTNAME_SUFFIX` of `test-service.demo-project.svc.cluster.local`:
+
+#### Node 0
+
+```markdown
+RANK=0
+WORLD_SIZE=2
+JOB_NAME=test
+HOSTNAME_SUFFIX=test-service.demo-project.svc.cluster.local
+MASTER_ADDR=test-0.test-service.demo-project.svc.cluster.local
+HOST_ADDR=test-0.test-service.demo-project.svc.cluster.local
+```
+
+#### Node 1
+
+```markdown
+RANK=1
+WORLD_SIZE=2
+JOB_NAME=test
+HOSTNAME_SUFFIX=test-service.demo-project.svc.cluster.local
+MASTER_ADDR=test-0.test-service.demo-project.svc.cluster.local
+HOST_ADDR=test-1.test-service.demo-project.svc.cluster.local
+```
+
