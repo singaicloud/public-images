@@ -243,7 +243,7 @@ When a distributed training job starts, several environment variables are automa
 The communication address for each pod (or process) is generally constructed as follows:
 
 ```
-POD_ADDRESS="${JOB_NAME}-${RANK}.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local"
+POD_ADDR="${JOB_NAME}-${RANK}.${SVC_NAME}.${POD_NAMESPACE}.svc.cluster.local"
 ```
 
 This address is used for identifying the communication endpoints between different processes. **`You can use the following Environment Variables directly in your python code.`**
