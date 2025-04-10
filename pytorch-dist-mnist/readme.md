@@ -26,7 +26,7 @@ When running distributed training jobs, several environment variables are automa
 Nodes communicate using a unique host address format constructed from environment variables:
 
 ```markdown
-SING_HOST_ADDR="${JOB_NAME}-${RANK}.${HOSTNAME_SUFFIX}"
+SING_HOST_ADDR="${SING_JOB_NAME}-${SING_RANK}.${SING_HOSTNAME_SUFFIX}"
 ```
 
 This host address uniquely identifies each node within your cluster.
