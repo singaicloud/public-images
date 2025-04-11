@@ -50,17 +50,17 @@ def test(model, device, loader, epoch, rank):
     print(f"[Epoch {epoch}] Rank {rank}: Accuracy {accuracy:.2%}")
 
 def main():
+    ### Configurations for distributed training using platform-provided environment variables.
     rank = int(os.environ.get("SING_RANK", 0))
     world_size = int(os.environ.get("SING_WORLD_SIZE", 1))
     master_addr = os.environ.get("SING_MASTER_ADDR", "localhost")
-    ################################⬇⬇⬇ Modify Here ⬇⬇⬇################################
+
     os.environ.update({                   # Customize your own environment variables name for distributed training
         "RANK": str(rank),                # modify "Rank" to "YOUR_OWN_RANK"
         "WORLD_SIZE": str(world_size),    # modify "WORLD_SIZE" to "YOUR_OWN_WORLD_SIZE"
         "MASTER_ADDR": master_addr,       # modify "MASTER_ADDR" to "YOUR_OWN_MASTER_ADDR"
         "MASTER_PORT": "1234"             # modify "MASTER_PORT" to "YOUR_OWN_MASTER_PORT" and the port you want to use
     })
-    ################################⬆⬆⬆ Modify Here ⬆⬆⬆################################
     dist.init_process_group("nccl")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
