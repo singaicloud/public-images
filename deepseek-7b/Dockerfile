@@ -4,10 +4,6 @@ FROM debian:bullseye-slim as builder
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Configure DNS
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    echo "nameserver 8.8.4.4" >> /etc/resolv.conf
-
 # Configure Aliyun apt source for faster downloads
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
     sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list
@@ -41,10 +37,6 @@ ENV MODEL_NAME=deepseek:7b \
     OLLAMA_PASSWORD="isingtacc2.0" \
     PATH="/usr/local/bin:${PATH}" \
     OLLAMA_TIMEOUT=120
-
-# Configure DNS
-RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
-    echo "nameserver 8.8.4.4" >> /etc/resolv.conf
 
 # Configure apt sources
 RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list && \
