@@ -1,4 +1,4 @@
-# Sing AI Cloud Ollama Universal Container
+# Ollama Universal Container
 
 This container provides a universal Ollama runtime environment supporting multiple 7B-sized language models.
 
