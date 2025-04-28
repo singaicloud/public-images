@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Start SSH service
-service ssh start
+service ssh start || echo "SSH service failed to start, continuing anyway..."
 
 # Configure Ollama to listen on all interfaces
 export OLLAMA_HOST="0.0.0.0"
