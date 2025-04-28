@@ -38,12 +38,16 @@ docker run -d -v ollama-data:/root/.ollama -p 11434:11434 --name ollama custom-o
 docker run -d --gpus all -v ollama-data:/root/.ollama -p 11434:11434 --name ollama custom-ollama
 ```
 
-### Pre-loading a Model
+## Removed ollama distributed deployment ### Default model 
+
+This image downloads and installs the `llama2` model (Meta's Llama 2 7B model) on startup by default. You can also override the default model by setting environment variables:
 
 ```bash
-# Run with a specific model that will be downloaded at startup
-docker run -d -v ollama-data:/root/.ollama -p 11434:11434 -e OLLAMA_MODEL=llama3 --name ollama custom-ollama
+# Use other models instead of the default llama2
+docker run -d -v ollama-data:/root/.ollama -p 11434:11434 -e OLLAMA_MODEL=mistral custom-ollama
 ```
+
+The list of available models can be viewed in the [Ollama Model Library](https://ollama.com/library).
 
 ## Deployment Notes
 
