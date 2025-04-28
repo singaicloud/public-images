@@ -3,27 +3,17 @@
 # Start SSH service
 service ssh start
 
-# Check for environment variables that would indicate distributed setup
-if [ ! -z "$SING_RANK" ] && [ ! -z "$SING_WORLD_SIZE" ] && [ ! -z "$SING_MASTER_ADDR" ]; then
-    echo "Detected distributed environment settings"
-    echo "RANK: $SING_RANK"
-    echo "WORLD_SIZE: $SING_WORLD_SIZE"
-    echo "MASTER_ADDR: $SING_MASTER_ADDR"
-    
-    # Set up Ollama environment variables if needed for distributed setup
-    # Currently Ollama doesn't have built-in distributed training support,
-    # but these variables are kept for future compatibility or custom implementations
-    export OLLAMA_HOST="0.0.0.0"
-    
-    # If not the master node, wait for master to be ready
-    if [ "$SING_RANK" != "0" ]; then
-        echo "This is a worker node. Waiting for master node to be ready..."
-        # Simple check to see if master is ready - can be improved
-        while ! ping -c 1 -W 1 $SING_MASTER_ADDR &> /dev/null; do
-            echo "Waiting for master node to be reachable..."
-            sleep 5
-        done
-    fi
+# Configure Ollama to listen on all interfaces
+export OLLAMA_HOST="0.0.0.0"
+
+# Note: Ollama does not support distributed processing
+# This container runs as a standalone service
+# Each instance operates independently
+
+# If environment variables for a distributed setup exist, log a note
+if [ ! -z "$SING_RANK" ] || [ ! -z "$SING_WORLD_SIZE" ] || [ ! -z "$SING_MASTER_ADDR" ]; then
+    echo "NOTE: Detected distributed environment variables, but Ollama operates as a standalone service."
+    echo "Each Ollama instance will run independently without coordination."
 fi
 
 # Check if a specific model should be pulled at startup
