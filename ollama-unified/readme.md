@@ -45,13 +45,15 @@ docker run -d --gpus all -v ollama-data:/root/.ollama -p 11434:11434 --name olla
 docker run -d -v ollama-data:/root/.ollama -p 11434:11434 -e OLLAMA_MODEL=llama3 --name ollama custom-ollama
 ```
 
-## Distributed Environment
+## Deployment Notes
 
-This image is designed to work in distributed environments similar to the PyTorch distributed example. It uses environment variables provided by the platform:
+This image is designed to run Ollama as a standalone service. Unlike the PyTorch distributed example:
 
-- `SING_RANK`: Unique identifier for each node within the distributed group
-- `SING_WORLD_SIZE`: Total number of nodes participating in the distributed job
-- `SING_MASTER_ADDR`: Host address for the node with rank 0 (master node)
+- Ollama does not support distributed processing or training
+- Each container runs independently as its own LLM inference service
+- You can deploy multiple containers but they will not coordinate with each other
+
+If you need to scale LLM inference, consider deploying multiple independent Ollama instances and using a load balancer in front of them.
 
 ## API Usage
 
