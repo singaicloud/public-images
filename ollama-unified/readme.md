@@ -67,8 +67,17 @@ Once the container is running, you can interact with Ollama through its API:
 # Test the API
 curl http://localhost:11434/api/generate -d '{
   "model": "llama3",
-  "prompt": "Hello, world!"
+  "prompt": "Explain what large language models are"
 }'
+```
+
+## SSH Access
+
+This image includes SSH server support for administration and management purposes. The default root password is `singaicloud`.
+
+```bash
+# Connect to the container via SSH
+ssh root@<container-ip>
 ```
 
 ## Notes on GPU Acceleration
