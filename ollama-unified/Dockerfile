@@ -1,31 +1,89 @@
-# Base image - using the official Ollama image
-FROM ollama/ollama:latest
+# Ollama Docker Deployment
 
-# Install basic utilities that might be useful
-RUN apt-get update && apt-get install -y \
-    curl \
-    wget \
-    ca-certificates \
-    --no-install-recommends && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+This project provides a Docker setup for deploying [Ollama](https://ollama.com), an open-source platform for running large language models (LLMs) locally.
 
-# Create working directory
-RUN mkdir -p /opt/ollama
-WORKDIR /opt/ollama
+## Project Structure
 
-# Add a startup script to initialize Ollama
-COPY start-ollama.sh /opt/ollama/start-ollama.sh
-RUN chmod +x /opt/ollama/start-ollama.sh
+```
+ollama-docker
+├── Dockerfile       # Docker configuration for Ollama deployment
+├── start-ollama.sh  # Startup script for initializing Ollama
+└── README.md        # This documentation file
+```
 
-# Set permissions to allow non-root users in OpenShift-like environments
-RUN chgrp -R 0 /opt/ollama \
-    && chmod -R g+rwX /opt/ollama \
-    && chgrp -R 0 /root/.ollama \
-    && chmod -R g+rwX /root/.ollama
+## Features
 
-# Expose Ollama API port
-EXPOSE 11434
+- Based on the official `ollama/ollama` Docker image
+- Support for NVIDIA GPU acceleration when available
+- SSH server for cross-node communication
+- Compatible with distributed environments (using SING_* environment variables)
+- Option to automatically pull models at startup
 
-# Set the entrypoint to use our custom startup script
-ENTRYPOINT ["/opt/ollama/start-ollama.sh"]
+## Quick Start
+
+### Basic Usage
+
+```bash
+# Build the Docker image
+docker build -t custom-ollama .
+
+# Run the container
+docker run -d -v ollama-data:/root/.ollama -p 11434:11434 --name ollama custom-ollama
+```
+
+### With GPU Support
+
+```bash
+# Make sure you have NVIDIA Docker runtime installed
+docker run -d --gpus all -v ollama-data:/root/.ollama -p 11434:11434 --name ollama custom-ollama
+```
+
+### Default model 
+
+This image downloads and installs the `llama2` model (Meta's Llama 2 7B model) on startup by default. You can also override the default model by setting environment variables:
+
+```bash
+# Use other models instead of the default llama2
+docker run -d -v ollama-data:/root/.ollama -p 11434:11434 -e OLLAMA_MODEL=mistral custom-ollama
+```
+
+The list of available models can be viewed in the [Ollama Model Library](https://ollama.com/library).
+
+## Deployment Notes
+
+This image is designed to run Ollama as a standalone service. Unlike the PyTorch distributed example:
+
+- Ollama does not support distributed processing or training
+- Each container runs independently as its own LLM inference service
+- You can deploy multiple containers but they will not coordinate with each other
+
+If you need to scale LLM inference, consider deploying multiple independent Ollama instances and using a load balancer in front of them.
+
+## API Usage
+
+Once the container is running, you can interact with Ollama through its API:
+
+```bash
+# Test the API
+curl http://localhost:11434/api/generate -d '{
+  "model": "llama3",
+  "prompt": "Explain what large language models are"
+}'
+```
+
+## SSH Access
+
+This image includes SSH server support for administration and management purposes. The default root password is `singaicloud`.
+
+```bash
+# Connect to the container via SSH
+ssh root@<container-ip>
+```
+
+## Notes on GPU Acceleration
+
+- You need at least 8 GB of RAM to run the 7B models
+- 16 GB is recommended for 13B models
+- 32 GB or more is needed for larger (30B+) models
+
+For more information, please refer to the [official Ollama documentation](https://github.com/ollama/ollama).
