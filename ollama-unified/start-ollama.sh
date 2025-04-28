@@ -18,8 +18,12 @@ fi
 
 # Check if a specific model should be pulled at startup
 if [ ! -z "$OLLAMA_MODEL" ]; then
-    echo "Pulling model $OLLAMA_MODEL at startup"
+    echo "Pulling custom model $OLLAMA_MODEL at startup"
     ollama pull $OLLAMA_MODEL
+else
+    # Default to llama2-7b if no specific model is specified
+    echo "Pulling default model llama2 at startup"
+    ollama pull llama2
 fi
 
 # Start Ollama service
