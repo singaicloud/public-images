@@ -12,14 +12,28 @@ pytorch-dist-mnist
 
 ## Getting Started
 
-Running this example is simple! Choose the `pytorch-dist-mnist` image from the `Create Job` page and use the default entrypoint to start the image:
-```
-python dist.py
-```
+Follow these steps to launch your distributed vLLM serving:
 
-The training process should finish shortly after submission. You can check the logs after job completion.
+1. Click "Quick Launch" and select `pytorch-dist-mnist:latest` image.
 
----
+2. In GPU Configuration, select the number of GPUs needed (recommend using the same GPU model, e.g., 3090).
+
+3. In Job Configuration, set the Entry Command. For example:
+    ```
+    python dist.py
+    ```
+
+4. In Exposed Ports, add:
+   - Port 22 (for SSH)
+   - Your service port
+
+5. Configure Environment Variables:
+   - No need environment variables for this image
+
+6. Click "Launch" to start the service.
+
+7. The training process should finish shortly after submission. You can check the logs after job completion.
+
 
 ## Understanding Multi-Node Communication
 
