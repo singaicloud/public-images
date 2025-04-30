@@ -1,0 +1,15 @@
+FROM vllm/vllm-openai:v0.6.6
+
+RUN apt-get update && \
+    apt-get install -y openssh-server curl && \
+    mkdir -p /run/sshd
+
+RUN echo 'root:isingtacc2.0' | chpasswd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+
+COPY shm_broadcast.py /usr/local/lib/python3.12/dist-packages/vllm/distributed/device_communicators/shm_broadcast.py
+
+EXPOSE 22
+ENTRYPOINT []
+CMD []
