@@ -10,6 +10,9 @@ RUN echo 'root:isingtacc2.0' | chpasswd && \
 
 COPY shm_broadcast.py /usr/local/lib/python3.12/dist-packages/vllm/distributed/device_communicators/shm_broadcast.py
 
+COPY run_ray_cluster.sh /vllm-workspace/run_ray_cluster.sh
+RUN chmod +x /vllm-workspace/run_ray_cluster.sh
+
 EXPOSE 22
 ENTRYPOINT []
 CMD []

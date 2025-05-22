@@ -72,6 +72,20 @@ if [ "$SING_RANK" = "0" ]; then
     done
     echo "[INFO] Ray is ready!"
     
+    # Wait until enough GPUs are available
+    EXPECTED_GPU_COUNT=$((TENSOR_PARALLEL_SIZE * PIPELINE_PARALLEL_SIZE))
+    echo "[INFO] Waiting for $EXPECTED_GPU_COUNT GPUs to be available..."
+    
+    while true; do
+        ACTUAL_GPU_COUNT=$(ray status --address=$SELF_IP:6379 2>/dev/null | grep "GPU" | awk -F'/' '{print $2}' | awk '{print int($1)}')
+        if [ "$ACTUAL_GPU_COUNT" -ge "$EXPECTED_GPU_COUNT" ]; then
+            echo "[INFO] GPU count check passed. Found $ACTUAL_GPU_COUNT GPUs."
+            break
+        fi
+        echo "[INFO] Current GPU count: $ACTUAL_GPU_COUNT, waiting for more GPUs..."
+        sleep 5
+    done
+    
     if [ -f /etc/profile ]; then
         source /etc/profile
     fi
