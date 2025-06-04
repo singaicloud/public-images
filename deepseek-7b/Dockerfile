@@ -34,7 +34,6 @@ ENV MODEL_NAME=deepseek:7b \
     OLLAMA_HOST=0.0.0.0 \
     OLLAMA_ORIGINS="*" \
     OLLAMA_USERNAME="admin" \
-    OLLAMA_PASSWORD="isingtacc2.0" \
     PATH="/usr/local/bin:${PATH}" \
     OLLAMA_TIMEOUT=120
 
@@ -59,7 +58,7 @@ RUN mkdir -p /usr/local/lib/ollama && \
     mkdir -p /app /root/.ollama /app/logs /var/run/sshd
 
 # Configure SSH
-RUN echo 'root:isingtacc2.0' | chpasswd && \
+RUN echo 'root:PASSWORD' | chpasswd && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
